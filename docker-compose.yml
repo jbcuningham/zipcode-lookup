@@ -1,0 +1,30 @@
+version: "3.8"
+services:
+  redis:
+    image: 'redislabs/redismod:edge'
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./data:/data
+    entrypoint: >
+      redis-server
+        --loadmodule /usr/lib/redis/modules/redisai.so
+        --loadmodule /usr/lib/redis/modules/redisearch.so
+        --loadmodule /usr/lib/redis/modules/redisgraph.so
+        --loadmodule /usr/lib/redis/modules/redistimeseries.so
+        --loadmodule /usr/lib/redis/modules/rejson.so
+        --loadmodule /usr/lib/redis/modules/redisbloom.so
+        --loadmodule /var/opt/redislabs/lib/modules/redisgears.so
+        --appendonly yes
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  web:
+    image: jbc/zipcode-lookup
+    environment:
+      WAIT_HOSTS: redis:6379
+    command: java -jar /zipcode-lookup-0.0.1-SNAPSHOT.jar
+    ports:
+      - target: 8080
+        published: 8080
